@@ -597,21 +597,23 @@ async def loc_handler(call: types.CallbackQuery):
     elif str(call.data).isdigit():
         index = str(call.data)
         sqLite.insert_info(table='drivers', name='number', data=f'{index}', telegram_id=call.from_user.id)
-
         data = sqLite.read_values_in_db_by_phone(table='connections', name='id', data=index)
         client = sqLite.read_values_in_db_by_phone(table='client', name='telegram_id', data=data[1])
-        xy = str(str(data[3]).split("GEO#")[0]).split(' ')
-        await bot.send_location(chat_id=call.from_user.id, latitude=xy[0], longitude=xy[1])
-        await call.message.answer(f'Вы точно хотите взять заказ <b>№{index}</b>\n'
-                                  f'Забрать человека нужно по адресу:\n<b>{str(data[3]).split("GEO#")[1]}</b>\n'
-                                  f'Конечный пункт: <b>{str(data[4]).split("GEO#")[1]}</b>\n'
-                                  f'Дополнительная информация от клиента - <b>{str(data[5])}</b>\n'
-                                  f'Телефон заказчика <b>{str(client[3])}</b>\n'
-                                  f'Рейтинг заказчика <b>{str(client[4])}</b>\n'
-                                  f'Стоимость поездки - <b>{str(data[8])} RUR</b>',
-                                  reply_markup=confirm_kb, parse_mode='html')
-        sqLite.insert_info(table='client', name='number', data=f'{index}', telegram_id=data[1])
-        await driver_Form.take_deal.set()
+        if client[1] == call.from_user.id:
+            await call.answer(text='Нельзя заказывать у себя', show_alert=True)
+        else:
+            xy = str(str(data[3]).split("GEO#")[0]).split(' ')
+            await bot.send_location(chat_id=call.from_user.id, latitude=xy[0], longitude=xy[1])
+            await call.message.answer(f'Вы точно хотите взять заказ <b>№{index}</b>\n'
+                                      f'Забрать человека нужно по адресу:\n<b>{str(data[3]).split("GEO#")[1]}</b>\n'
+                                      f'Конечный пункт: <b>{str(data[4]).split("GEO#")[1]}</b>\n'
+                                      f'Дополнительная информация от клиента - <b>{str(data[5])}</b>\n'
+                                      f'Телефон заказчика <b>{str(client[3])}</b>\n'
+                                      f'Рейтинг заказчика <b>{str(client[4])}</b>\n'
+                                      f'Стоимость поездки - <b>{str(data[8])} RUR</b>',
+                                      reply_markup=confirm_kb, parse_mode='html')
+            sqLite.insert_info(table='client', name='number', data=f'{index}', telegram_id=data[1])
+            await driver_Form.take_deal.set()
     elif str(call.data) == 'driver_finish_trip':
         await call.message.answer('Оцените клиента от 1-5', reply_markup=mark_kb)
         await driver_Form.mark.set()
