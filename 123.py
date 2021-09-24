@@ -28,7 +28,7 @@ async def start_menu(message: types.Message):
 
 @dp.callback_query_handler()
 async def start_menu(call: types.CallbackQuery):
-    await call.answer('Перешел назад')
+    await call.answer('Ничем')
 
 
 if __name__ == '__main__':
