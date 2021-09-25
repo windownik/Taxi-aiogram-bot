@@ -495,7 +495,7 @@ async def loc_handler(call: types.CallbackQuery):
         sqLite.insert_info(table='drivers', name='status', data=lust_deal, telegram_id=call.from_user.id)
         sqLite.insert_info(table='drivers', name='time_geo', data='0',
                            telegram_id=call.from_user.id)
-        await bot.send_message(text=f'К вам выехал автомобиль:\n'
+        await bot.send_message(text=f'К вам едет водитель <b>{d_data[2]}</b>\n'
                                     f'<b>{d_data[4]}</b>\nГосномер авто: <b>{d_data[5]}</b>\n'
                                     f'Телефонный номер водителя <b>{d_data[3]}</b>\n'
                                     f'Его рейтинг - <b>{d_data[6]}</b>',
@@ -505,8 +505,7 @@ async def loc_handler(call: types.CallbackQuery):
         await bot.send_location(chat_id=call.from_user.id, latitude=xy[0], longitude=xy[1])
         await call.message.answer(f'В конце поездки напомните клиенту подтвердить выполнение заказа, если клиент не '
                                   f'подтвердит заказ. Система автоматически закроет заказ в вашу пользу через 1 час '
-                                  f'после принятия его вами к исполнению.'
-                                  f'', reply_markup=start_driver_deal_kb)
+                                  f'после принятия его вами к исполнению.', reply_markup=start_driver_deal_kb)
         await driver_Form.work_deal.set()
     else:
         client = sqLite.read_all_values_in_db(table='drivers', telegram_id=call.from_user.id)

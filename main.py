@@ -1,10 +1,12 @@
 from aiogram import executor
 from modules.dispatcher import dp
-from modules.server import cleaner
+from modules.server import cleaner, sender
+import asyncio
 import threading
 
 
 if __name__ == '__main__':
-    t = threading.Thread(target=cleaner, name="Thread")
-    t.start()
+    b = threading.Thread(target=sender, name="Thread_2")
+    b.start()
     executor.start_polling(dp)
+

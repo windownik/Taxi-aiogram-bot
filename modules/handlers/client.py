@@ -99,7 +99,8 @@ async def name(call: types.CallbackQuery):
             if block_data > datetime.datetime.now():
                 hours = sqLite.read_all_value_bu_name(table='admin', name='time_delta')[0][0]
                 block_data = block_data + timedelta(hours=hours)
-                await call.message.edit_text(f'<b>Вы звблокированы до {block_data}</b>', parse_mode='html',
+                await call.message.edit_text(f'<b>Вы звблокированы до {block_data}</b>, '
+                                             f'по всем вопросам обращаться @taxiadmin', parse_mode='html',
                                              reply_markup=back_kb)
             else:
                 sqLite.insert_info(table='client', telegram_id=call.from_user.id, name='status', data='active')
