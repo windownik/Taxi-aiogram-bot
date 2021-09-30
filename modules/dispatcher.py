@@ -100,3 +100,6 @@ class admin_Form(StatesGroup):
     admin_send_msg = State()
     admin_send_msg_confirm = State()
 
+    admin_set_payments_type = State()
+
+

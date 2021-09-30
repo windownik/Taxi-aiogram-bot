@@ -23,6 +23,7 @@ async def start_menu(message: types.Message):
 
 
 # Start menu callback
+@dp.callback_query_handler(state=admin_Form.admin_set_payments_type, text='back')
 @dp.callback_query_handler(state=admin_Form.admin_send_msg_one_confirm, text='back')
 @dp.callback_query_handler(state=admin_Form.admin_set_pay, text='back')
 @dp.callback_query_handler(state=admin_Form.admin_set_confirm, text='back')

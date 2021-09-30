@@ -4,7 +4,8 @@ from aiogram import types
 from main import dp
 import datetime
 from modules import sqLite
-from modules.keyboards import confirm_kb, back_kb, admin_kb, admin_client_kb, admin_driver_kb, admin_ban_kb
+from modules.keyboards import confirm_kb, back_kb, admin_kb, admin_client_kb, admin_driver_kb, admin_ban_kb, \
+    payments_type_kb
 from modules.dispatcher import bot, admin_Form
 
 
@@ -114,7 +115,7 @@ async def start_menu(message: types.Message):
                                  f'Номер автомобиля <b>{data2[5]}</b>,\n'
                                  f'Рейтинг <b>{data2[6]}</b>,\n'
                                  f'Статус (блокировка до) <b>{data2[16]}</b>,\n'
-                                 f'Тариф оплачен до <b>{data2[9]}</b>,\n', parse_mode='html',
+                                 f'Баланс составляет <b>{data2[9]} RUR</b>,\n', parse_mode='html',
                                  reply_markup=admin_driver_kb)
             await admin_Form.admin_users.set()
 
@@ -141,7 +142,7 @@ async def start_menu(call: types.CallbackQuery):
         await admin_Form.admin_send_msg_one.set()
 
     elif str(call.data) == 'pay_time':
-        await call.message.answer('Введите количество оплаченых дней', reply_markup=back_kb)
+        await call.message.answer('Введите новую сумму в RUR.\n\n Только цифры.', reply_markup=back_kb)
         await admin_Form.admin_set_pay.set()
     else:
         pass
@@ -244,7 +245,7 @@ async def start_menu(call: types.CallbackQuery):
 async def start_menu(message: types.Message):
     if message.text.isdigit():
         sqLite.insert_info(table='admin', name='data3', data=message.text, telegram_id=message.from_user.id)
-        await message.answer(f'Вы хотите дать платный период на {message.text} дней?', reply_markup=confirm_kb)
+        await message.answer(f'Вы хотите установить баланс равный - {message.text} RUR?', reply_markup=confirm_kb)
         await admin_Form.admin_set_confirm.set()
     else:
         await message.answer('Введите только цифры')
@@ -255,10 +256,8 @@ async def start_menu(message: types.Message):
 async def start_menu(call: types.CallbackQuery):
     user_id = sqLite.read_all_values_in_db(table='admin', telegram_id=call.from_user.id)[5]
     pay_time = sqLite.read_all_values_in_db(table='admin', telegram_id=call.from_user.id)[7]
-    now = datetime.datetime.now()
-    ban_date = now + timedelta(days=int(pay_time))
-    sqLite.insert_info(table='drivers', name='pay_line', data=str(ban_date).split(' ')[0], telegram_id=int(user_id))
-    await call.message.answer('Оплаченный период заданн')
+    sqLite.insert_info(table='drivers', name='pay_line', data=str(pay_time), telegram_id=int(user_id))
+    await call.message.answer('Новый баланс установлен.')
     await call.message.answer('Привет администратор. Чем тебе помочь', reply_markup=admin_kb)
     await admin_Form.admin_first_menu.set()
 
@@ -307,3 +306,25 @@ async def start_menu(message: types.Message):
         await admin_Form.admin_first_menu.set()
     else:
         await message.answer("Введите только число")
+
+
+# Admin menu
+@dp.callback_query_handler(state=admin_Form.admin_first_menu, text='payments_type')
+async def start_menu(call: types.CallbackQuery):
+    time_delta = sqLite.read_all_value_bu_name(name='time_delta', table='admin')[0][0]
+    await call.message.edit_text(f'Выберите какую платежную систему установить.', parse_mode='html',
+                                 reply_markup=payments_type_kb)
+    await admin_Form.admin_set_payments_type.set()
+
+
+# Admin menu
+@dp.callback_query_handler(state=admin_Form.admin_set_payments_type)
+async def start_menu(call: types.CallbackQuery):
+    if str(call.data) == 'y_kassa':
+        sqLite.insert_info(table='admin', name='payments_type', data='y_kassa', telegram_id=call.from_user.id)
+        await call.message.answer('Установленна платежная система <b>Ю-КАССА</b>', parse_mode='html')
+    elif str(call.data) == 'sber_kassa':
+        sqLite.insert_info(table='admin', name='payments_type', data='sber_kassa', telegram_id=call.from_user.id)
+        await call.message.answer('Установленна платежная система <b>СБЕР-КАССА</b>', parse_mode='html')
+    await call.message.answer('Привет администратор. Чем тебе помочь', reply_markup=admin_kb)
+    await admin_Form.admin_first_menu.set()

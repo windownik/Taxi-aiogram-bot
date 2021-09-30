@@ -117,21 +117,11 @@ async def loc_handler(call: types.CallbackQuery):
     lust_deal = datetime.datetime.strptime(str(lust_deal), "%Y-%m-%d %H:%M:%S")
     if ((datetime.datetime.now() - lust_deal) > timedelta(minutes=45)) or (str(data[16]) == 'active'):
         if '1' in str(pay_mod):
-            if str(data[9]) == 'None':
-                client = sqLite.read_all_values_in_db(table='drivers', telegram_id=call.from_user.id)
-                await call.message.answer('У вас закончился оплаченный период. Для получения заявок '
-                                          'пожалуйста оплатите подписку.', reply_markup=taxi_driver_start_kb())
-                await driver_Form.driver_first_menu.set()
-            elif datetime.datetime.strptime(str(data[9]), "%Y-%m-%d %H:%M:%S") < datetime.datetime.now():
-                client = sqLite.read_all_values_in_db(table='drivers', telegram_id=call.from_user.id)
-                await call.message.answer('У вас закончился оплаченный период. Для получения заявок '
-                                          'пожалуйста оплатите подписку.', reply_markup=taxi_driver_start_kb())
-                await driver_Form.driver_first_menu.set()
-            else:
-                await call.message.answer(
-                    'Что бы найти заказ отправьте нам ваше место положение, \nДля отмены нажмите /cancel',
-                    reply_markup=geo_kb)
-                await driver_Form.driver_find_trip.set()
+            await call.message.answer(f'Ваш баланс сейчас составляет {data[9]} RUR\n'
+                                      f'Что бы найти заказ отправьте нам ваше место положение, \n'
+                                      f'Для отмены нажмите /cancel',
+                                      reply_markup=geo_kb)
+            await driver_Form.driver_find_trip.set()
         else:
             await call.message.answer('Что бы найти заказ отправьте нам ваше место положение, \n'
                                       'Для отмены нажмите /cancel',

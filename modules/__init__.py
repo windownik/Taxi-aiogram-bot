@@ -1,1 +1,1 @@
-from modules.handlers import start_handlers, admin, payments_sber, taxi_drivers, client
+from modules.handlers import start_handlers, admin, payments, taxi_drivers, client

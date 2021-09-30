@@ -70,6 +70,7 @@ async def pay_for_day(message: types.Message):
             await bot.send_document(chat_id=message.from_user.id, document=file,
                                     caption='Оплачивая подписку вы соглашаетесь с правилами и условиями изложенными в '
                                             'данном документе')
+
         await bot.send_invoice(chat_id=message.from_user.id, title='Оплата за 1 месяц пользования', currency='RUB',
                                description=f"Вы хотите заплатить за количество дней: {message.text}, "
                                            f"это будет стоить {str(price_days)[:-2]} RUR", payload='days_pay',
