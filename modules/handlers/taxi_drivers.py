@@ -96,7 +96,8 @@ async def loc_handler(message: types.Message):
 @dp.message_handler(state=driver_Form.driver_reg_type_car)
 async def loc_handler(message: types.Message):
     client = sqLite.read_all_values_in_db(table='drivers', telegram_id=message.from_user.id)
-    await message.answer('Вы успешно зарегистрировались как водитель.')
+    await message.answer('Вы успешно зарегистрировались как водитель.\n'
+                         'Ваш счет пополнен на 100 RUR')
     sqLite.insert_info(table='drivers', name='car', data=message.text,
                        telegram_id=message.from_user.id)
     await message.answer(text=f'Добрый день <b>{client[2]}</b>. Твой рейтинг <b>{client[6]}</b>. \n'

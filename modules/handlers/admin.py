@@ -5,8 +5,21 @@ from main import dp
 import datetime
 from modules import sqLite
 from modules.keyboards import confirm_kb, back_kb, admin_kb, admin_client_kb, admin_driver_kb, admin_ban_kb, \
-    payments_type_kb
+    payments_type_kb, admin_set_kb
 from modules.dispatcher import bot, admin_Form
+
+
+# Admin menu
+@dp.callback_query_handler(state=admin_Form.admin_set_payments_type, text='back')
+@dp.callback_query_handler(state=admin_Form.dilay_time, text='back')
+@dp.callback_query_handler(state=admin_Form.admin_pay_mod, text='back')
+@dp.callback_query_handler(state=admin_Form.admin_set_small, text='back')
+@dp.callback_query_handler(state=admin_Form.admin_set_big, text='back')
+@dp.callback_query_handler(state=admin_Form.admin_first_menu, text='admin_set')
+async def start_menu(call: types.CallbackQuery):
+    sqLite.insert_info(table='admin', name='data', data='drivers', telegram_id=call.from_user.id)
+    await call.message.edit_text('Здесь вы можите изменить настройки бота', reply_markup=admin_set_kb)
+    await admin_Form.admin_first_menu.set()
 
 
 # Admin menu
@@ -311,7 +324,6 @@ async def start_menu(message: types.Message):
 # Admin menu
 @dp.callback_query_handler(state=admin_Form.admin_first_menu, text='payments_type')
 async def start_menu(call: types.CallbackQuery):
-    time_delta = sqLite.read_all_value_bu_name(name='time_delta', table='admin')[0][0]
     await call.message.edit_text(f'Выберите какую платежную систему установить.', parse_mode='html',
                                  reply_markup=payments_type_kb)
     await admin_Form.admin_set_payments_type.set()
@@ -328,3 +340,49 @@ async def start_menu(call: types.CallbackQuery):
         await call.message.answer('Установленна платежная система <b>СБЕР-КАССА</b>', parse_mode='html')
     await call.message.answer('Привет администратор. Чем тебе помочь', reply_markup=admin_kb)
     await admin_Form.admin_first_menu.set()
+
+
+# Admin menu
+@dp.callback_query_handler(state=admin_Form.admin_first_menu, text='price_small')
+async def start_menu(call: types.CallbackQuery):
+    admin = sqLite.read_all_value_bu_name(name='small_price', table='admin')[0][0]
+    await call.message.edit_text(f'Процент комисии сейчас состаляет <b>{admin} %</b>\n'
+                                 f'Введите новый процент комисии в RUR\n\n'
+                                 f'Только цифры.',
+                                 parse_mode='html', reply_markup=back_kb)
+    await admin_Form.admin_set_small.set()
+
+
+# Admin menu
+@dp.message_handler(state=admin_Form.admin_set_small)
+async def start_menu(message: types.Message):
+    if message.text.isdigit():
+        sqLite.insert_info(table='admin', name='small_price', data=int(message.text), telegram_id=message.from_user.id)
+        await message.answer(f'Процент комисии установлен равный <b>{message.text} %</b>', parse_mode='html')
+        await message.answer('Привет администратор. Чем тебе помочь', reply_markup=admin_kb)
+        await admin_Form.admin_first_menu.set()
+    else:
+        await message.answer("Введите только число")
+
+
+# Admin menu
+@dp.callback_query_handler(state=admin_Form.admin_first_menu, text='price_big')
+async def start_menu(call: types.CallbackQuery):
+    admin = sqLite.read_all_value_bu_name(name='big_price', table='admin')[0][0]
+    await call.message.edit_text(f'Максимальная комисия сейчас состаляет <b>{admin} RUR</b>\n'
+                                 f'Введите новую максимальную коммиссию в RUR\n\n'
+                                 f'Только цифры.',
+                                 parse_mode='html', reply_markup=back_kb)
+    await admin_Form.admin_set_big.set()
+
+
+# Admin menu
+@dp.message_handler(state=admin_Form.admin_set_big)
+async def start_menu(message: types.Message):
+    if message.text.isdigit():
+        sqLite.insert_info(table='admin', name='big_price', data=int(message.text), telegram_id=message.from_user.id)
+        await message.answer(f'Максимльная комисия установлена равной <b>{message.text} RUR</b>', parse_mode='html')
+        await message.answer('Привет администратор. Чем тебе помочь', reply_markup=admin_kb)
+        await admin_Form.admin_first_menu.set()
+    else:
+        await message.answer("Введите только число")

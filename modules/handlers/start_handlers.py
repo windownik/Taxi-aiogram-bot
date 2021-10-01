@@ -23,7 +23,7 @@ async def start_menu(message: types.Message):
 
 
 # Start menu callback
-@dp.callback_query_handler(state=admin_Form.admin_set_payments_type, text='back')
+@dp.callback_query_handler(state=admin_Form.admin_first_menu, text='back')
 @dp.callback_query_handler(state=admin_Form.admin_send_msg_one_confirm, text='back')
 @dp.callback_query_handler(state=admin_Form.admin_set_pay, text='back')
 @dp.callback_query_handler(state=admin_Form.admin_set_confirm, text='back')
@@ -32,9 +32,7 @@ async def start_menu(message: types.Message):
 @dp.callback_query_handler(state=admin_Form.admin_ban_time, text='back')
 @dp.callback_query_handler(state=admin_Form.admin_ban, text='back')
 @dp.callback_query_handler(state=admin_Form.admin_send_msg_confirm, text='back')
-@dp.callback_query_handler(state=admin_Form.dilay_time, text='back')
 @dp.callback_query_handler(state=admin_Form.admin_send_msg, text='back')
-@dp.callback_query_handler(state=admin_Form.admin_pay_mod, text='back')
 @dp.callback_query_handler(state=start_Form.first_menu, text='back')
 @dp.callback_query_handler(state=driver_Form.driver_first_menu, text='back')
 @dp.callback_query_handler(state=client_Form.client_first_menu, text='back')

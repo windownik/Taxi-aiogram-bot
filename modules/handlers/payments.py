@@ -1,7 +1,3 @@
-import calendar
-import datetime
-from datetime import timedelta
-
 from aiogram import types
 from aiogram.types.message import ContentTypes
 
@@ -19,8 +15,6 @@ async def start_menu(call: types.CallbackQuery):
         lust_deal = '0'
     else:
         lust_deal = client[9]
-    price_1month = workWF.read_price().split('#')[0]
-    price_1_day = workWF.read_price().split('#')[1]
 
     await call.message.edit_text(text=f'У вас на счету сейчас <b>{lust_deal} RUR</b>\n'
                                       'Введите сумму которую хотите положить.',

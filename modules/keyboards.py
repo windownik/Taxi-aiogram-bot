@@ -25,7 +25,7 @@ def taxi_driver_start_kb():
     taxi_driver_change = InlineKeyboardButton(text=f'Изменить учетную запись', callback_data='change')
     taxi_driver_find = InlineKeyboardButton(text=f'Найти заказ', callback_data='find_trip')
 
-    driver_pay = InlineKeyboardButton(text=f'Оплатить', callback_data='driver_pay')
+    driver_pay = InlineKeyboardButton(text=f'Пополнить баланс', callback_data='driver_pay')
     taxi_driver_start_kb = InlineKeyboardMarkup().add(taxi_driver_find)
     taxi_driver_start_kb.add(taxi_driver_change)
     if '1' in str(sqLite.read_all_value_bu_name(name='pay_mod', table='admin')[0][0]):
@@ -115,15 +115,28 @@ driver_finish_trip_kb.add(back)
 
 drivers = InlineKeyboardButton(text=f'Водители', callback_data='drivers')
 clients = InlineKeyboardButton(text=f'Клиенты', callback_data='clients')
-pay_mod = InlineKeyboardButton(text=f'Платный мод', callback_data='pay_mod')
-payments_type = InlineKeyboardButton(text=f'Тип платежной системы', callback_data='payments_type')
+admin_set = InlineKeyboardButton(text=f'Настройки', callback_data='admin_set')
 find_user = InlineKeyboardButton(text=f'Найти человека', callback_data='find_user')
-dilay_time = InlineKeyboardButton(text=f'Время задержки сервера', callback_data='dilay_time')
+
 admin_kb = InlineKeyboardMarkup().add(find_user)
-admin_kb.add(clients, drivers)
-admin_kb.add(payments_type)
-admin_kb.add(pay_mod, dilay_time)
+admin_kb.add(clients)
+admin_kb.add(drivers)
+admin_kb.add(admin_set)
 admin_kb.add(taxi_driver, client)
+
+
+price_small = InlineKeyboardButton(text=f'Процент коммисии', callback_data='price_small')
+price_big = InlineKeyboardButton(text=f'Задать максимальную коммисию', callback_data='price_big')
+payments_type = InlineKeyboardButton(text=f'Тип платежной системы', callback_data='payments_type')
+dilay_time = InlineKeyboardButton(text=f'Время задержки сервера', callback_data='dilay_time')
+pay_mod = InlineKeyboardButton(text=f'Платный мод', callback_data='pay_mod')
+
+admin_set_kb = InlineKeyboardMarkup().add(pay_mod)
+admin_set_kb.add(payments_type)
+admin_set_kb.add(price_small)
+admin_set_kb.add(price_big)
+admin_set_kb.add(dilay_time)
+admin_set_kb.add(back)
 
 
 by_phone = InlineKeyboardButton(text=f'Найти по номеру телефона', callback_data='by_phone')
