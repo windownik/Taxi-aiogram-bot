@@ -560,11 +560,16 @@ async def loc_handler(call: types.CallbackQuery):
     sqLite.insert_info(table='client', name='rating_number', data=(rating_number + 1),
                        telegram_id=data[1])
 
+    d_data = sqLite.read_values_in_db_by_phone(table='drivers', name='telegram_id', data=data[2])
+    new_balance = int(d_data[9]) + int(d_data[15])
+    sqLite.insert_info(table='drivers', name='pay_line', data=new_balance, telegram_id=data[2])
+    sqLite.insert_info(table='drivers', name='status', data='active', telegram_id=data[2])
     await call.message.answer('Вы отменили заявку после того как водитель ее принял. Вы не cможете подавать '
                               'новые заявки следующие 30 минут')
     await call.message.answer(text=f'Добрый день <b>{client[2]}</b>. \nЧем могу помочь?',
                               reply_markup=new_trip_kb, parse_mode='html')
-    await bot.send_message(text=f'Заявка <b>№{index[10]}</b> отменена. Вы можете оставить жалобу в нашем канале \n\n'
+    await bot.send_message(text=f'Заявка <b>№{index[10]}</b> отменена. Комиссия за этот заказ возвращена. '
+                                f'Вы можете оставить жалобу в нашем канале \n\n'
                                 'https://t.me/sports2day/ ',
                            chat_id=data[2], parse_mode='html', reply_markup=driver_msg_to_admin)
     await client_Form.client_first_menu.set()
@@ -604,6 +609,10 @@ async def loc_handler(call: types.CallbackQuery):
             await call.answer(text='Нельзя заказывать у себя', show_alert=True)
         else:
             xy = str(str(data[3]).split("GEO#")[0]).split(' ')
+            admin = sqLite.read_all_value_bu_name(name='*', table='admin')[0]
+            procent = int(int(data[8]) * int(admin[10]) / 100)
+            if procent > int(admin[11]):
+                procent = int(admin[11])
             await bot.send_location(chat_id=call.from_user.id, latitude=xy[0], longitude=xy[1])
             await call.message.answer(f'Вы точно хотите взять заказ <b>№{index}</b>\n'
                                       f'Забрать человека нужно по адресу:\n<b>{str(data[3]).split("GEO#")[1]}</b>\n'
@@ -611,7 +620,8 @@ async def loc_handler(call: types.CallbackQuery):
                                       f'Дополнительная информация от клиента - <b>{str(data[5])}</b>\n'
                                       f'Телефон заказчика <b>{str(client[3])}</b>\n'
                                       f'Рейтинг заказчика <b>{str(client[4])}</b>\n'
-                                      f'Стоимость поездки - <b>{str(data[8])} RUR</b>',
+                                      f'Стоимость поездки - <b>{str(data[8])} RUR</b>\n'
+                                      f'Коммисия по этому заказу составит <b>{procent} RUR</b>',
                                       reply_markup=confirm_kb, parse_mode='html')
             sqLite.insert_info(table='client', name='number', data=f'{index}', telegram_id=data[1])
             await driver_Form.take_deal.set()

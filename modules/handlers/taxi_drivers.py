@@ -469,7 +469,12 @@ async def loc_handler(call: types.CallbackQuery):
     d_data = sqLite.read_values_in_db_by_phone(table='drivers', name='telegram_id', data=call.from_user.id)
 
     data = sqLite.read_values_in_db_by_phone(table='connections', name='id', data=int(d_data[8]))
-    if data[6] == 'active':
+    admin = sqLite.read_all_value_bu_name(name='*', table='admin')[0]
+    procent = int(int(data[8]) * int(admin[10]) / 100)
+    if procent > int(admin[11]):
+        procent = int(admin[11])
+
+    if data[6] == 'active' and int(d_data[9]) >= procent:
         sqLite.insert_info(table='connections', name='driver', data=call.from_user.id,
                            telegram_id=int(d_data[8]), id_name='id')
         sqLite.insert_info(table='connections', name='status', data='work',
@@ -486,6 +491,10 @@ async def loc_handler(call: types.CallbackQuery):
         sqLite.insert_info(table='drivers', name='status', data=lust_deal, telegram_id=call.from_user.id)
         sqLite.insert_info(table='drivers', name='time_geo', data='0',
                            telegram_id=call.from_user.id)
+        old_balance = int(d_data[9])
+        new_balance = old_balance - procent
+        sqLite.insert_info(table='drivers', name='pay_line', data=new_balance, telegram_id=call.from_user.id)
+        sqLite.insert_info(table='drivers', name='data', data=str(procent), telegram_id=call.from_user.id)
         await bot.send_message(text=f'К вам едет водитель <b>{d_data[2]}</b>\n'
                                     f'<b>{d_data[4]}</b>\nГосномер авто: <b>{d_data[5]}</b>\n'
                                     f'Телефонный номер водителя <b>{d_data[3]}</b>\n'
@@ -496,11 +505,12 @@ async def loc_handler(call: types.CallbackQuery):
         await bot.send_location(chat_id=call.from_user.id, latitude=xy[0], longitude=xy[1])
         await call.message.answer(f'В конце поездки напомните клиенту подтвердить выполнение заказа, если клиент не '
                                   f'подтвердит заказ. Система автоматически закроет заказ в вашу пользу через 1 час '
-                                  f'после принятия его вами к исполнению.', reply_markup=start_driver_deal_kb)
+                                  f'после принятия его вами к исполнению.\n\n'
+                                  f'Комисия за эту поездку составляет {procent} RUR', reply_markup=start_driver_deal_kb)
         await driver_Form.work_deal.set()
     else:
         client = sqLite.read_all_values_in_db(table='drivers', telegram_id=call.from_user.id)
-        await call.message.answer('Заказ уже забрали')
+        await call.message.answer('Заказ уже забрали, либо у вас не достаточно средств для оплаты комисии')
         await call.message.answer(text=f'Добрый день <b>{client[2]}</b>. Твой рейтинг <b>{client[6]}</b>. \n'
                                        f'Чем могу помочь?',
                                   reply_markup=taxi_driver_start_kb(), parse_mode='html')
@@ -511,7 +521,8 @@ async def loc_handler(call: types.CallbackQuery):
 async def loc_handler(call: types.CallbackQuery):
     await call.message.answer('Вы уверены что хотите отказатся от заказа? \n\nПостарайтесь выполнить заказ в любом '
                               'случае. Если вы сейчас откажитесь от заказа ваш рейтинг понизится и вы не сможете взять '
-                              f'новый заказ в течении 45 минут.', reply_markup=confirm_kb)
+                              f'новый заказ в течении 45 минут, так же комиссия за поездку не будет возвращена',
+                              reply_markup=confirm_kb)
     await driver_Form.work_deal_confirm.set()
 
 
