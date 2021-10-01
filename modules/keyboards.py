@@ -148,9 +148,12 @@ admin_black_kb.add(show_list)
 ban_client = InlineKeyboardButton(text=f'Изменить статус', callback_data='ban_client')
 pay_time = InlineKeyboardButton(text=f'Изменить баланс', callback_data='pay_time')
 send_msg = InlineKeyboardButton(text=f'Отправить сообщение', callback_data='send_msg')
+bad_description_msg = InlineKeyboardButton(text=f'Сообщения о несоответствии',
+                                           callback_data='bad_description_msg')
 admin_driver_kb = InlineKeyboardMarkup().add(ban_client)
 admin_driver_kb.add(pay_time)
 admin_driver_kb.add(send_msg)
+admin_driver_kb.add(bad_description_msg)
 admin_driver_kb.add(back)
 
 

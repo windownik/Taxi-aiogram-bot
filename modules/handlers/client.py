@@ -631,7 +631,14 @@ async def loc_handler(call: types.CallbackQuery):
     elif str(call.data) == 'msg_admin':
         await call.message.answer('Введите текст сообщения')
         await driver_Form.msg_admin.set()
-
+    elif str(call.data) == 'update_live':
+        time_15 = datetime.datetime.now() + timedelta(minutes=15)
+        sqLite.insert_info(table='drivers', name='time_geo', data=str(time_15).split('.')[0],
+                           telegram_id=call.from_user.id)
+        sqLite.insert_send_data(telegram_id=call.from_user.id,
+                                text='15 минут истекло. Нажмите кнопку ниже если хотите продлить режим ожидания.',
+                                send_data=str(time_15).split('.')[0])
+        await call.message.answer('Режим ожидания продлен на 15 минут')
     else:
         pass
 

@@ -85,13 +85,26 @@ def insert_info_pool(
     connect.commit()
     connect.close()
 
+
 # Удаляем данные из таблицы
 def delete_str(
         table: str,
         data,
-        name: str='telegram_id'):
+        name: str = 'telegram_id'):
     connect = sqlite3.connect('modules/database.db')
     curs = connect.cursor()
     curs.execute(f"DELETE FROM '{table}' WHERE {name}={data}")
+    connect.commit()
+    connect.close()
+
+
+# Созданм новую запись о тратах или доходах в бд в личной таблице
+def insert_send_data(telegram_id: str,
+                     text: str,
+                     send_data: str):
+    connect = sqlite3.connect('modules/database.db')
+    curs = connect.cursor()
+    curs.execute(f"INSERT INTO sender VALUES (?,?,?,?)",
+                 (None, f'{telegram_id}', f'{text}', f'{send_data}'))
     connect.commit()
     connect.close()

@@ -28,13 +28,21 @@ def sender():
         for d in data:
             line_time = datetime.datetime.strptime(str(d[3]).split('.')[0], "%Y-%m-%d %H:%M:%S")
             if line_time < time_now:
-                try:
-                    requests.get(API_link + f'sendMessage?chat_id={d[1]}&text={d[2]}').json()
-                except:
-                    time.sleep(1)
-                    requests.get(API_link + f'sendMessage?chat_id={d[1]}&text={d[2]}').json()
+                req_text = API_link + 'sendMessage?chat_id=' + str(d[1]) + '&text=' + str(d[2]) + '&reply_markup={"inline_keyboard":[[{"text":"Получать заявки на лету","callback_data":"update_live"}]]}'
+                if '15 минут истекло' in str(d[2]):
+                    try:
+                        requests.post(req_text)
+                    except:
+                        time.sleep(1)
+                        requests.post(req_text)
+                else:
+                    try:
+                        requests.get(API_link + f'sendMessage?chat_id={d[1]}&text={d[2]}').json()
+                    except:
+                        time.sleep(1)
+                        requests.get(API_link + f'sendMessage?chat_id={d[1]}&text={d[2]}').json()
                 sqLite.delete_str(table='sender', name='id', data=d[0])
                 time.sleep(0.1)
         time.sleep(5)
-
+# 'https://api.telegram.org/bot1936600372:AAEWfVMbiLZFrdLvh-E98hV9JyoY6oWcR24/sendMessage?chat_id=580357185&text="текст"&reply_markup={"inline_keyboard":[[{"text":"Получать заявки на лету","callback_data":"update_live"}]]}'
 

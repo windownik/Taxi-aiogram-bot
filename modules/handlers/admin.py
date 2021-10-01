@@ -128,7 +128,10 @@ async def start_menu(message: types.Message):
                                  f'Номер автомобиля <b>{data2[5]}</b>,\n'
                                  f'Рейтинг <b>{data2[6]}</b>,\n'
                                  f'Статус (блокировка до) <b>{data2[16]}</b>,\n'
-                                 f'Баланс составляет <b>{data2[9]} RUR</b>,\n', parse_mode='html',
+                                 f'Баланс составляет <b>{data2[9]} RUR</b>,\n'
+                                 f'Количество несоответствий описания сегодня <b>{data2[17]}</b>\n'
+                                 f'Количество несоответствий описания за все время <b>{data2[18]}</b>\n',
+                                 parse_mode='html',
                                  reply_markup=admin_driver_kb)
             await admin_Form.admin_users.set()
 
@@ -156,6 +159,15 @@ async def start_menu(call: types.CallbackQuery):
 
     elif str(call.data) == 'pay_time':
         await call.message.answer('Введите новую сумму в RUR.\n\n Только цифры.', reply_markup=back_kb)
+        await admin_Form.admin_set_pay.set()
+
+    elif str(call.data) == 'bad_description_msg':
+        user_id = sqLite.read_all_values_in_db(table='admin', telegram_id=call.from_user.id)[5]
+        data2 = sqLite.read_all_values_in_db(table='drivers', telegram_id=user_id)[19]
+        bad_msg = str(data2).split('###')
+        for m in range(0, len(bad_msg)-1):
+            await call.message.answer(f'{bad_msg[m]}')
+        await call.message.answer(f'Это все сообщения', reply_markup=back_kb)
         await admin_Form.admin_set_pay.set()
     else:
         pass
