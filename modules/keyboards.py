@@ -40,16 +40,12 @@ driver_msg_to_admin = InlineKeyboardMarkup()
 driver_msg_to_admin.add(back)
 
 
-taxi_driver_1 = InlineKeyboardButton(text=f'Найти заказы в радиусе 1км', callback_data='taxi_driver_1')
-taxi_driver_3 = InlineKeyboardButton(text=f'Найти заказы в радиусе 3км', callback_data='taxi_driver_3')
-taxi_driver_5 = InlineKeyboardButton(text=f'Найти заказы в радиусе 5км', callback_data='taxi_driver_5')
-taxi_driver_10 = InlineKeyboardButton(text=f'Найти заказы в радиусе 10км', callback_data='taxi_driver_10')
-taxi_driver_2000 = InlineKeyboardButton(text=f'Найти заказы в радиусе свыше 10км', callback_data='taxi_driver_2000')
+taxi_driver_10 = InlineKeyboardButton(text=f'Увелисить радиус до 10км', callback_data='10')
+taxi_driver_20 = InlineKeyboardButton(text=f'Увелисить радиус до 20км', callback_data='20')
+taxi_driver_2000 = InlineKeyboardButton(text=f'Увелисить радиус свыше 20км', callback_data='500')
 
-taxi_driver_kb = InlineKeyboardMarkup().add(taxi_driver_1)
-taxi_driver_kb.add(taxi_driver_3)
-taxi_driver_kb.add(taxi_driver_5)
-taxi_driver_kb.add(taxi_driver_10)
+taxi_driver_kb = InlineKeyboardMarkup().add(taxi_driver_10)
+taxi_driver_kb.add(taxi_driver_20)
 taxi_driver_kb.add(taxi_driver_2000)
 taxi_driver_kb.add(back)
 
@@ -97,9 +93,11 @@ pay_one_month_kb = InlineKeyboardMarkup().add(pay_one_month)
 pay_one_month_kb.add(pay_day)
 pay_one_month_kb.add(back)
 
+change_distant = InlineKeyboardButton(text=f'Изменить дальность поиска', callback_data='change_distant')
 change_price = InlineKeyboardButton(text=f'Изменить цену', callback_data='change_price')
 delete_deal = InlineKeyboardButton(text=f'Удалить', callback_data='delete_deal')
 my_deal_kb = InlineKeyboardMarkup().add(change_price)
+my_deal_kb.add(change_distant)
 my_deal_kb.add(delete_deal)
 my_deal_kb.add(back)
 

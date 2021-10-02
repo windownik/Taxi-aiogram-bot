@@ -17,7 +17,7 @@ async def start_menu(call: types.CallbackQuery):
         lust_deal = client[9]
 
     await call.message.edit_text(text=f'У вас на счету сейчас <b>{lust_deal} RUR</b>\n'
-                                      'Введите сумму которую хотите положить.',
+                                      'Введите сумму которую хотите положить. Балансс не может привышать 100 RUR',
                                  parse_mode='html')
     await driver_Form.driver_pay.set()
 
@@ -31,17 +31,21 @@ async def input_money(message: types.Message):
         elif str(payments_type) == 'sber_kassa':
             pay_token = workWF.read_sber_token()
         price = f'{message.text}00'
-        with open('document.pdf', 'rb') as file:
-            await bot.send_document(chat_id=message.from_user.id, document=file,
-                                    caption='Оплачивая подписку вы соглашаетесь с правилами и условиями изложенными в '
-                                            'данном документе')
-        await bot.send_invoice(chat_id=message.from_user.id, title='Оплата за пользование ботом', currency='RUB',
-                               description=f'Вы ложите {message.text} RUR на свой счет в бот', payload='bot_pay',
-                               provider_token=pay_token, start_parameter='bot_pay',
-                               prices=[{"label": 'Руб', "amount": int(price)}])
-        file.close()
-        sqLite.insert_info(table='drivers', name='data', data=message.text,
-                           telegram_id=message.from_user.id)
+        driver_balance = sqLite.read_all_values_in_db(table='drivers', telegram_id=message.from_user.id)[9]
+        if (100 - int(driver_balance)) >= int(message.text):
+            with open('document.pdf', 'rb') as file:
+                await bot.send_document(chat_id=message.from_user.id, document=file,
+                                        caption='Оплачивая подписку вы соглашаетесь с правилами и условиями изложенными в '
+                                                'данном документе')
+            await bot.send_invoice(chat_id=message.from_user.id, title='Оплата за пользование ботом', currency='RUB',
+                                   description=f'Вы ложите {message.text} RUR на свой счет в бот', payload='bot_pay',
+                                   provider_token=pay_token, start_parameter='bot_pay',
+                                   prices=[{"label": 'Руб', "amount": int(price)}])
+            file.close()
+            sqLite.insert_info(table='drivers', name='data', data=message.text,
+                               telegram_id=message.from_user.id)
+        else:
+            await message.answer('Баланс не может превышать 100 RUR. Сумма пополнения должна быть меньше')
     else:
         await message.answer('Введите только цифры.')
 

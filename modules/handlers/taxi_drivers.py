@@ -116,7 +116,7 @@ async def loc_handler(call: types.CallbackQuery):
     else:
         lust_deal = str('2021-09-20 00:34:51')
     lust_deal = datetime.datetime.strptime(str(lust_deal), "%Y-%m-%d %H:%M:%S")
-    if ((datetime.datetime.now() - lust_deal) > timedelta(minutes=45)) or (str(data[16]) == 'active'):
+    if str(data[16]) == 'active':
         if '1' in str(pay_mod):
             lust_descr = str(data[19]).split('###')
             lust_descr = str(lust_descr[len(lust_descr) - 2]).split('    ')[0]
@@ -144,7 +144,8 @@ async def loc_handler(call: types.CallbackQuery):
     else:
         hours = sqLite.read_all_value_bu_name(table='admin', name='time_delta')[0][0]
         lust_deal = lust_deal + timedelta(hours=hours) + timedelta(minutes=15)
-        await call.message.edit_text(f'Вы заблокированы до <b>{lust_deal}</b>.',
+        await call.message.edit_text(f'Вы заблокированы до <b>{lust_deal}</b>.'
+                                     f'по всем вопросам обращаться @taxiadmin',
                                      parse_mode='html', reply_markup=back_kb)
         await driver_Form.msg_admin_confirm.set()
 
@@ -156,52 +157,83 @@ async def loc_handler(message: types.Message):
     y = message.location.longitude
     sqLite.insert_info(table='drivers', name='geo', data=f'{x} {y}', telegram_id=message.from_user.id)
     await message.answer('Отлично я получил ваше расположение.', reply_markup=types.ReplyKeyboardRemove())
-    await message.answer(text="Выберите где искать ваш заказ", reply_markup=taxi_driver_kb)
-    await driver_Form.driver_receive_geo.set()
+    sqLite.insert_info(table='drivers', name='time_geo', data='0',
+                       telegram_id=message.from_user.id)
+    geo = sqLite.read_value_bu_name(name='geo', table='drivers', telegram_id=message.from_user.id)[0]
+    x = str(geo).split(' ')[0]
+    y = str(geo).split(' ')[1]
+    x_left = float(x) + 0.0088 * 500
+    x_right = float(x) - 0.0088 * 500
+    y_up = float(y) + 0.015187 * 500
+    y_down = float(y) - 0.015187 * 500
+
+    trip = sqLite.read_all_value_bu_name(table='connections', name='*')
+    sqLite.insert_info(table='drivers', name='range_geo', data='5', telegram_id=message.from_user.id)
+    for i in trip:
+
+        x_left = float(x) + 0.0088 * int(i[7])
+        x_right = float(x) - 0.0088 * int(i[7])
+        y_up = float(y) + 0.015187 * int(i[7])
+        y_down = float(y) - 0.015187 * int(i[7])
+
+        ix = str(i[3]).split('GEO#')[0]
+        ix = str(ix).split(' ')
+        if x_right < float(ix[0]) < x_left:
+            if y_down < float(ix[1]) < y_up:
+                if str(i[6]) == 'active':
+                    k = i[0]
+                    take_deal = InlineKeyboardButton(text=f'Подробнее', callback_data=f'{k}')
+                    take_deal_kb = InlineKeyboardMarkup().add(take_deal)
+                    start = str(i[3]).split('GEO#')[1]
+                    end = str(i[4]).split('GEO#')[1]
+
+                    hours = sqLite.read_all_value_bu_name(table='admin', name='time_delta')[0][0]
+                    lust_deal = datetime.datetime.strptime(str(i[9]).split(".")[0],
+                                                           "%Y-%m-%d %H:%M:%S")
+                    lust_deal = lust_deal + timedelta(hours=hours)
+                    distant = round((((float(x) - float(ix[0])) / 0.0088) ** 2 +
+                                     ((float(y) - float(ix[1])) / 0.015187)**2) ** 0.5, 2)
+                    await message.answer(f'<b>№{str(i[0])}</b> Место отправления <b>{start}</b>\n'
+                                         f'Место прибытия <b>{end}</b>\n'
+                                         f'Растояние до заказа <b>{distant} км</b>\n'
+                                         f'Дата создания <b>{lust_deal}</b>. \n'
+                                         f'Стоимость <b>{str(i[8])}</b> RUR', parse_mode='html',
+                                         reply_markup=take_deal_kb)
+        else:
+            pass
+    await message.answer('Вот все заказы которые есть поблизости от вас', reply_markup=update_live_kb)
+    await driver_Form.deal_list.set()
 
 
 # receive the start trip point
 @dp.message_handler(state=driver_Form.driver_find_trip)
 async def loc_handler(message: types.Message):
-    user_id = message.from_user.id
-    y = str(adres_to_cords(message.text))
-    if y == 'Error':
-        await message.answer('Я не могу распознать введенные вами данные. Попробуйте еще раз')
-    else:
-        y = y.split(' ')
-        sqLite.insert_info(table='drivers', name='geo', data=f'{y[1]} {y[0]}',
-                           telegram_id=user_id)
-        await message.answer(text="Вот точка на карте что мне удалось найти по заданному адресу",
-                             reply_markup=types.ReplyKeyboardRemove())
-        await message.answer_location(latitude=float(y[1]), longitude=float(y[0]))
-        await message.answer(text="Выберите где искать ваш заказ", reply_markup=taxi_driver_kb)
-        await driver_Form.driver_receive_geo.set()
+    await message.answer('Отправьте свое местоположение с помощью кнопки')
 
 
 # receive the your geo
 @dp.callback_query_handler(state=driver_Form.deal_list, text='back')
 @dp.callback_query_handler(state=driver_Form.take_deal, text='back')
 async def loc_handler(call: types.CallbackQuery):
-    await call.message.edit_text(text="Выберите где искать ваш заказ", reply_markup=taxi_driver_kb)
-    await driver_Form.driver_receive_geo.set()
-
-
-# Start searching deal 1km around
-@dp.callback_query_handler(state=driver_Form.driver_receive_geo, text='taxi_driver_1')
-async def loc_handler(call: types.CallbackQuery):
     sqLite.insert_info(table='drivers', name='time_geo', data='0',
                        telegram_id=call.from_user.id)
     geo = sqLite.read_value_bu_name(name='geo', table='drivers', telegram_id=call.from_user.id)[0]
     x = str(geo).split(' ')[0]
     y = str(geo).split(' ')[1]
-    x_left = float(x) + 0.0088
-    x_right = float(x) - 0.0088
-    y_up = float(y) + 0.015187
-    y_down = float(y) - 0.015187
+    x_left = float(x) + 0.0088 * 500
+    x_right = float(x) - 0.0088 * 500
+    y_up = float(y) + 0.015187 * 500
+    y_down = float(y) - 0.015187 * 500
 
     trip = sqLite.read_all_value_bu_name(table='connections', name='*')
     sqLite.insert_info(table='drivers', name='range_geo', data='1', telegram_id=call.from_user.id)
     for i in trip:
+
+        x_left = float(x) + 0.0088 * int(i[7])
+        x_right = float(x) - 0.0088 * int(i[7])
+        y_up = float(y) + 0.015187 * int(i[7])
+        y_down = float(y) - 0.015187 * int(i[7])
+
         ix = str(i[3]).split('GEO#')[0]
         ix = str(ix).split(' ')
         if x_right < float(ix[0]) < x_left:
@@ -218,7 +250,7 @@ async def loc_handler(call: types.CallbackQuery):
                                                            "%Y-%m-%d %H:%M:%S")
                     lust_deal = lust_deal + timedelta(hours=hours)
                     distant = round((((float(x) - float(ix[0])) / 0.0088) ** 2 +
-                                     ((float(y) - float(ix[1])) ** 2) / 0.015187) ** 0.5, 2)
+                                     ((float(y) - float(ix[1])) / 0.015187)**2) ** 0.5, 2)
                     await call.message.answer(f'<b>№{str(i[0])}</b> Место отправления <b>{start}</b>\n'
                                               f'Место прибытия <b>{end}</b>\n'
                                               f'Растояние до заказа <b>{distant} км</b>\n'
@@ -227,179 +259,7 @@ async def loc_handler(call: types.CallbackQuery):
                                               reply_markup=take_deal_kb)
         else:
             pass
-    await call.message.answer('Вот все заказы которые есть в радиусе 1 км от вас', reply_markup=update_live_kb)
-    await driver_Form.deal_list.set()
-
-
-# Start searching deal 3km around
-@dp.callback_query_handler(state=driver_Form.driver_receive_geo, text='taxi_driver_3')
-async def loc_handler(call: types.CallbackQuery):
-    geo = sqLite.read_value_bu_name(name='geo', table='drivers', telegram_id=call.from_user.id)[0]
-    x = str(geo).split(' ')[0]
-    y = str(geo).split(' ')[1]
-    x_left = float(x) + 0.0088 * 3
-    x_right = float(x) - 0.0088 * 3
-    y_up = float(y) + 0.015187 * 3
-    y_down = float(y) - 0.015187 * 3
-    sqLite.insert_info(table='drivers', name='range_geo', data='3', telegram_id=call.from_user.id)
-    trip = sqLite.read_all_value_bu_name(table='connections', name='*')
-
-    for i in trip:
-        ix = str(i[3]).split('GEO#')[0]
-        ix = str(ix).split(' ')
-        if x_right < float(ix[0]) < x_left:
-            if y_down < float(ix[1]) < y_up:
-                if str(i[6]) == 'active':
-                    k = i[0]
-                    take_deal = InlineKeyboardButton(text=f'Подробнее', callback_data=f'{k}')
-                    take_deal_kb = InlineKeyboardMarkup().add(take_deal)
-                    start = str(i[3]).split('GEO#')[1]
-                    end = str(i[4]).split('GEO#')[1]
-
-                    hours = sqLite.read_all_value_bu_name(table='admin', name='time_delta')[0][0]
-                    lust_deal = datetime.datetime.strptime(str(i[9]).split(".")[0],
-                                                           "%Y-%m-%d %H:%M:%S")
-                    lust_deal = lust_deal + timedelta(hours=hours)
-                    distant = round((((float(x) - float(ix[0])) / 0.0088) ** 2 +
-                                     ((float(y) - float(ix[1])) / 0.015187) ** 2) ** 0.5, 2)
-                    await call.message.answer(f'<b>№{str(i[0])}</b> Место отправления <b>{start}</b>\n'
-                                              f'Место прибытия <b>{end}</b>\n'
-                                              f'Растояние до заказа <b>{distant} км</b>\n'
-                                              f'Дата создания <b>{lust_deal}</b>. Стоимость '
-                                              f'<b>{str(i[8])}</b> RUR', parse_mode='html',
-                                              reply_markup=take_deal_kb)
-        else:
-            pass
-    await call.message.answer('Вот все заказы которые есть в радиусе 3 км от вас', reply_markup=update_live_kb)
-    await driver_Form.deal_list.set()
-
-
-# Start searching deal 5km around
-@dp.callback_query_handler(state=driver_Form.driver_receive_geo, text='taxi_driver_5')
-async def loc_handler(call: types.CallbackQuery):
-    geo = sqLite.read_value_bu_name(name='geo', table='drivers', telegram_id=call.from_user.id)[0]
-    x = str(geo).split(' ')[0]
-    y = str(geo).split(' ')[1]
-    x_left = float(x) + 0.0088 * 5
-    x_right = float(x) - 0.0088 * 5
-    y_up = float(y) + 0.015187 * 5
-    y_down = float(y) - 0.015187 * 5
-
-    trip = sqLite.read_all_value_bu_name(table='connections', name='*')
-    sqLite.insert_info(table='drivers', name='range_geo', data='5', telegram_id=call.from_user.id)
-    for i in trip:
-        ix = str(i[3]).split('GEO#')[0]
-        ix = str(ix).split(' ')
-        if x_right < float(ix[0]) < x_left:
-            if y_down < float(ix[1]) < y_up:
-                if str(i[6]) == 'active':
-                    k = i[0]
-                    take_deal = InlineKeyboardButton(text=f'Подробнее', callback_data=f'{k}')
-                    take_deal_kb = InlineKeyboardMarkup().add(take_deal)
-                    start = str(i[3]).split('GEO#')[1]
-                    end = str(i[4]).split('GEO#')[1]
-
-                    hours = sqLite.read_all_value_bu_name(table='admin', name='time_delta')[0][0]
-                    lust_deal = datetime.datetime.strptime(str(i[9]).split(".")[0],
-                                                           "%Y-%m-%d %H:%M:%S")
-                    lust_deal = lust_deal + timedelta(hours=hours)
-                    distant = round((((float(x) - float(ix[0])) / 0.0088) ** 2 +
-                                     ((float(y) - float(ix[1])) / 0.015187) ** 2) ** 0.5, 2)
-                    await call.message.answer(f'<b>№{str(i[0])}</b> Место отправления <b>{start}</b>\n'
-                                              f'Место прибытия <b>{end}</b>\n'
-                                              f'Растояние до заказа <b>{distant} км</b>\n'
-                                              f'Дата создания <b>{lust_deal}</b>. Стоимость '
-                                              f'<b>{str(i[8])}</b> RUR', parse_mode='html',
-                                              reply_markup=take_deal_kb)
-        else:
-            pass
-    await call.message.answer('Вот все заказы которые есть в радиусе 5 км от вас', reply_markup=update_live_kb)
-    await driver_Form.deal_list.set()
-
-
-# Start searching deal 10km around
-@dp.callback_query_handler(state=driver_Form.driver_receive_geo, text='taxi_driver_10')
-async def loc_handler(call: types.CallbackQuery):
-    geo = sqLite.read_value_bu_name(name='geo', table='drivers', telegram_id=call.from_user.id)[0]
-    x = str(geo).split(' ')[0]
-    y = str(geo).split(' ')[1]
-    x_left = float(x) + 0.0088 * 10
-    x_right = float(x) - 0.0088 * 10
-    y_up = float(y) + 0.015187 * 10
-    y_down = float(y) - 0.015187 * 10
-
-    trip = sqLite.read_all_value_bu_name(table='connections', name='*')
-    sqLite.insert_info(table='drivers', name='range_geo', data='10', telegram_id=call.from_user.id)
-    for i in trip:
-        ix = str(i[3]).split('GEO#')[0]
-        ix = str(ix).split(' ')
-        if x_right < float(ix[0]) < x_left:
-            if y_down < float(ix[1]) < y_up:
-                if str(i[6]) == 'active':
-                    k = i[0]
-                    take_deal = InlineKeyboardButton(text=f'Подробнее', callback_data=f'{k}')
-                    take_deal_kb = InlineKeyboardMarkup().add(take_deal)
-                    start = str(i[3]).split('GEO#')[1]
-                    end = str(i[4]).split('GEO#')[1]
-
-                    hours = sqLite.read_all_value_bu_name(table='admin', name='time_delta')[0][0]
-                    lust_deal = datetime.datetime.strptime(str(i[9]).split(".")[0],
-                                                           "%Y-%m-%d %H:%M:%S")
-                    lust_deal = lust_deal + timedelta(hours=hours)
-                    distant = round((((float(x) - float(ix[0])) / 0.0088) ** 2 +
-                                     ((float(y) - float(ix[1])) / 0.015187) ** 2) ** 0.5, 2)
-                    await call.message.answer(f'<b>№{str(i[0])}</b> Место отправления <b>{start}</b>\n'
-                                              f'Место прибытия <b>{end}</b>\n'
-                                              f'Растояние до заказа <b>{distant} км</b>\n'
-                                              f'Дата создания <b>{lust_deal}</b>. Стоимость '
-                                              f'<b>{str(i[8])}</b> RUR', parse_mode='html',
-                                              reply_markup=take_deal_kb)
-        else:
-            pass
-    await call.message.answer('Вот все заказы которые есть в радиусе 10 км от вас', reply_markup=update_live_kb)
-    await driver_Form.deal_list.set()
-
-
-# Start searching deal 10km around
-@dp.callback_query_handler(state=driver_Form.driver_receive_geo, text='taxi_driver_2000')
-async def loc_handler(call: types.CallbackQuery):
-    geo = sqLite.read_value_bu_name(name='geo', table='drivers', telegram_id=call.from_user.id)[0]
-    x = str(geo).split(' ')[0]
-    y = str(geo).split(' ')[1]
-    x_left = float(x) + 0.0088 * 2000
-    x_right = float(x) - 0.0088 * 2000
-    y_up = float(y) + 0.015187 * 2000
-    y_down = float(y) - 0.015187 * 2000
-
-    trip = sqLite.read_all_value_bu_name(table='connections', name='*')
-    sqLite.insert_info(table='drivers', name='range_geo', data='2000', telegram_id=call.from_user.id)
-    for i in trip:
-        ix = str(i[3]).split('GEO#')[0]
-        ix = str(ix).split(' ')
-        if x_right < float(ix[0]) < x_left:
-            if y_down < float(ix[1]) < y_up:
-                if str(i[6]) == 'active':
-                    k = i[0]
-                    take_deal = InlineKeyboardButton(text=f'Подробнее', callback_data=f'{k}')
-                    take_deal_kb = InlineKeyboardMarkup().add(take_deal)
-                    start = str(i[3]).split('GEO#')[1]
-                    end = str(i[4]).split('GEO#')[1]
-
-                    hours = sqLite.read_all_value_bu_name(table='admin', name='time_delta')[0][0]
-                    lust_deal = datetime.datetime.strptime(str(i[9]).split(".")[0],
-                                                           "%Y-%m-%d %H:%M:%S")
-                    lust_deal = lust_deal + timedelta(hours=hours)
-                    distant = round((((float(x) - float(ix[0])) / 0.0088) ** 2 +
-                                     ((float(y) - float(ix[1])) / 0.015187) ** 2) ** 0.5, 2)
-                    await call.message.answer(f'<b>№{str(i[0])}</b> Место отправления <b>{start}</b>\n'
-                                              f'Место прибытия <b>{end}</b>\n'
-                                              f'Растояние до заказа <b>{distant} км</b>\n'
-                                              f'Дата создания <b>{lust_deal}</b>. Стоимость '
-                                              f'<b>{str(i[8])}</b> RUR', parse_mode='html',
-                                              reply_markup=take_deal_kb)
-        else:
-            pass
-    await call.message.answer('Вот все заказы которые есть в радиусе свыше 10 км от вас', reply_markup=update_live_kb)
+    await call.message.answer('Вот все заказы которые есть поблизоссти от вас', reply_markup=update_live_kb)
     await driver_Form.deal_list.set()
 
 
@@ -446,9 +306,9 @@ async def loc_handler(call: types.CallbackQuery):
         sqLite.insert_info(table='connections', name='status', data='work',
                            telegram_id=int(d_data[8]), id_name='id')
 
-        lust_deal = datetime.datetime.now()
-        lust_deal = lust_deal + timedelta(hours=1)
-        sqLite.insert_info(table='drivers', name='status', data=lust_deal, telegram_id=call.from_user.id)
+        # lust_deal = datetime.datetime.now()
+        # lust_deal = lust_deal + timedelta(hours=1)
+        # sqLite.insert_info(table='drivers', name='status', data=lust_deal, telegram_id=call.from_user.id)
         sqLite.insert_info(table='drivers', name='time_geo', data='0',
                            telegram_id=call.from_user.id)
         old_balance = int(d_data[9])
@@ -480,8 +340,11 @@ async def loc_handler(call: types.CallbackQuery):
 @dp.callback_query_handler(state=driver_Form.work_deal, text='bad_deal_d')
 async def loc_handler(call: types.CallbackQuery):
     await call.message.answer('Вы уверены что хотите отказатся от заказа? \n\nПостарайтесь выполнить заказ в любом '
-                              'случае. Если вы сейчас откажитесь от заказа ваш рейтинг понизится и вы не сможете взять '
-                              f'новый заказ в течении 45 минут, так же комиссия за поездку не будет возвращена',
+                              'случае. Если вы сейчас откажитесь от заказа ваш рейтинг понизится, '
+                              'так же комиссия за поездку не будет возвращена\n\n'
+                              'Напаминаем если вы отмените 2 '
+                              'заявки в течении 24 часа то вы будете заблокированы на сутки. После трех блакировок на '
+                              'сутки вы будете заблокированы на месяц!',
                               reply_markup=confirm_kb)
     await driver_Form.work_deal_confirm.set()
 
@@ -496,14 +359,36 @@ async def loc_handler(call: types.CallbackQuery):
     await bot.send_message(chat_id=data[1], text='Водитель отказался от заказа, мы применем к нему меры!')
     await call.message.edit_text('Вы отказались от заказа, ')
 
+    block_period_day = datetime.datetime.now() - timedelta(days=1)
+    try:
+        lust_bed_data = str(d_data[22]).split('.')[0]
+        block_lust = datetime.datetime.strptime(str(lust_bed_data), "%Y-%m-%d %H:%M:%S")
+    except:
+        block_lust = datetime.datetime.strptime('2021-01-20 00:34:51', "%Y-%m-%d %H:%M:%S")
+    print(block_period_day, block_lust)
+    if block_period_day < block_lust:
+        print(1)
+        block_data = datetime.datetime.now() + timedelta(days=1)
+        sqLite.insert_info(table='drivers', telegram_id=call.from_user.id, name='status', data=str(block_data))
+        sqLite.insert_info(table='drivers', telegram_id=call.from_user.id, name='lust_block_day',
+                           data=datetime.datetime.now())
+        block_number = int(d_data[21]) + 1
+        if block_number == 3:
+            block_period_day = datetime.datetime.now() + timedelta(days=30)
+            sqLite.insert_info(table='drivers', telegram_id=call.from_user.id, name='status',
+                               data=str(block_period_day))
+            block_number = 0
+        sqLite.insert_info(table='drivers', telegram_id=call.from_user.id, name='block_number_month',
+                           data=block_number)
+    else:
+        print(2)
+        sqLite.insert_info(table='drivers', telegram_id=call.from_user.id, name='lust_block_day',
+                           data=datetime.datetime.now())
+
     old_rating = sqLite.read_value_bu_name(name='rating', table='drivers', telegram_id=call.from_user.id)[0]
     rating_number = sqLite.read_value_bu_name(name='rating_number', table='drivers', telegram_id=call.from_user.id)[0]
     new_rating = str(round((float(old_rating) * float(rating_number)) / (float(rating_number) + 1), 3))
 
-    block_time = datetime.datetime.now()
-    block_time = block_time + timedelta(minutes=45)
-    sqLite.insert_info(table='drivers', name='status', data=block_time,
-                       telegram_id=call.from_user.id)
     sqLite.insert_info(table='drivers', name='rating', data=new_rating,
                        telegram_id=call.from_user.id)
     sqLite.insert_info(table='drivers', name='rating_number', data=(rating_number + 1),

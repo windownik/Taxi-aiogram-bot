@@ -54,6 +54,8 @@ class client_Form(StatesGroup):
     change_trip_confirm = State()
     send_msg_admin = State()
 
+    change_distant = State()
+
 
 class driver_Form(StatesGroup):
     driver_first_menu = State()
