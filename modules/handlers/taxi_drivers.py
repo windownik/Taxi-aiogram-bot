@@ -118,6 +118,19 @@ async def loc_handler(call: types.CallbackQuery):
     lust_deal = datetime.datetime.strptime(str(lust_deal), "%Y-%m-%d %H:%M:%S")
     if ((datetime.datetime.now() - lust_deal) > timedelta(minutes=45)) or (str(data[16]) == 'active'):
         if '1' in str(pay_mod):
+            lust_descr = str(data[19]).split('###')
+            lust_descr = str(lust_descr[len(lust_descr) - 2]).split('    ')[0]
+            if data[20] == 1:
+                await call.message.answer(f'На вас подали жалобу. Ваши реальные данные не соответствуют данным '
+                                          f'указанным при регистрации. Пожалуйста исправьте ваши данные в профиле на '
+                                          f'реальные. При повторном  сообщении о несоответсвии вы будете заблокированы.\n'
+                                          f'Если вы несогласноы напишите @taxiadmin. Вот текст жалобы от клиента\n\n'
+                                          f'<b>{lust_descr}</b>', parse_mode='html')
+                sqLite.insert_info(table='drivers', name='lust_bed_descr', data=0,
+                                   telegram_id=call.from_user.id)
+
+            else:
+                pass
             await call.message.answer(f'Ваш баланс сейчас составляет {data[9]} RUR\n'
                                       f'Что бы найти заказ отправьте нам ваше место положение, \n'
                                       f'Для отмены нажмите /cancel',

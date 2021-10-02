@@ -2,10 +2,10 @@ import sqlite3
 
 
 # Пользователь проверяет все данные о себе по базе данных
-def read_all_values_in_db(table: str, telegram_id: int):
+def read_all_values_in_db(table: str, telegram_id: int, *, id_name: str = 'telegram_id'):
     connect = sqlite3.connect('modules/database.db')
     curs = connect.cursor()
-    for data in curs.execute(f'SELECT * FROM {table} WHERE telegram_id= "{telegram_id}"'):
+    for data in curs.execute(f'SELECT * FROM {table} WHERE {id_name}= "{telegram_id}"'):
         return data
     connect.close()
 

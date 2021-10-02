@@ -5,7 +5,7 @@ import datetime
 from modules.geo import adres_to_cords
 from modules import sqLite, geo
 from modules.keyboards import phone_kb, geo_kb, new_trip_kb, confirm_kb, info_kb, mark_kb, back_kb, my_deal_kb, \
-    driver_msg_to_admin, driver_finish_trip_kb
+    driver_msg_to_admin, driver_finish_trip_kb, yes_no_kb
 from modules.dispatcher import bot, client_Form, start_Form, driver_Form, admin_Form
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
@@ -576,6 +576,64 @@ async def loc_handler(call: types.CallbackQuery):
 
 
 # Finish trip
+@dp.callback_query_handler(state=client_Form.bed_description_driver, text='yes_btn')
+async def loc_handler(call: types.CallbackQuery):
+    client = sqLite.read_all_values_in_db(table='client', telegram_id=call.from_user.id)
+    await call.message.answer('Спасибо за отзыв')
+    await call.message.answer(text=f'Добрый день <b>{client[2]}</b>. \nЧем могу помочь?',
+                              reply_markup=new_trip_kb, parse_mode='html')
+    await client_Form.client_first_menu.set()
+
+
+# Finish trip
+@dp.callback_query_handler(state=client_Form.bed_description_driver, text='no_btn')
+async def loc_handler(call: types.CallbackQuery):
+    client = sqLite.read_all_values_in_db(table='client', telegram_id=call.from_user.id)
+    await call.message.answer('Напишите нам в сообщении что не соответствует.')
+    await client_Form.bed_description_msg.set()
+
+
+# Finish trip
+@dp.message_handler(state=client_Form.bed_description_msg)
+async def loc_handler(message: types.Message):
+    client = sqLite.read_all_values_in_db(table='client', telegram_id=message.from_user.id)
+    deal_id = sqLite.read_all_values_in_db(table='client', telegram_id=message.from_user.id)[10]
+    driver_id = sqLite.read_all_values_in_db(table='connections', telegram_id=int(deal_id), id_name='id')[2]
+    d_data = sqLite.read_all_values_in_db(table='drivers', telegram_id=driver_id)
+    time_now = str(datetime.datetime.now()).split('.')[0]
+    if d_data[19] is None:
+        new_data = str(message.text) + f'    {time_now}###'
+    else:
+        new_data = str(d_data[19]) + str(message.text) + f'    {time_now}###'
+
+    one_day = datetime.datetime.strptime(str(time_now), "%Y-%m-%d %H:%M:%S") - timedelta(days=1)
+    try:
+        lust_descr_data = str(d_data[19]).split('###')
+        lust_descr_data = str(lust_descr_data[len(lust_descr_data) - 2]).split('    ')[1]
+        lust_descr_data = datetime.datetime.strptime(lust_descr_data)
+    except:
+        lust_descr_data = datetime.datetime.strptime('2021-10-01 17:32:42', "%Y-%m-%d %H:%M:%S")
+    if one_day < lust_descr_data:
+        new_number_day = int(d_data[17]) + 1
+    else:
+        new_number_day = 1
+    new_number = int(d_data[18]) + 1
+
+    sqLite.insert_info(table='drivers', name='msg_bad_description', data=new_data,
+                       telegram_id=driver_id)
+    sqLite.insert_info(table='drivers', name='lust_bed_descr', data=1,
+                       telegram_id=driver_id)
+    sqLite.insert_info(table='drivers', name='bad_description_day', data=new_number_day,
+                       telegram_id=driver_id)
+    sqLite.insert_info(table='drivers', name='bad_description', data=new_number,
+                       telegram_id=driver_id)
+    await message.answer('Спасибо за отзыв')
+    await message.answer(text=f'Добрый день <b>{client[2]}</b>. \nЧем могу помочь?',
+                              reply_markup=new_trip_kb, parse_mode='html')
+    await client_Form.client_first_menu.set()
+
+
+# Finish trip
 @dp.callback_query_handler(state='*')
 async def loc_handler(call: types.CallbackQuery):
     if '_|_' in str(call.data):
@@ -661,12 +719,14 @@ async def loc_handler(message: types.Message):
                                telegram_id=data[2])
             sqLite.insert_info(table='drivers', name='rating_number', data=(rating_number + 1),
                                telegram_id=data[2])
-            await message.answer('Спасибо за отзыв, вы можете оставить жалобу в нашем канале \n\n'
-                                 'https://t.me/sports2day/ ')
-            await message.answer(text=f'Добрый день <b>{client[2]}</b>. \nЧем могу помочь?',
-                                 reply_markup=new_trip_kb, parse_mode='html')
-            await client_Form.client_first_menu.set()
+            await message.answer('Соответствует ли описание водителя реальному?', reply_markup=yes_no_kb)
+            await client_Form.bed_description_driver.set()
         else:
             await message.answer('Нажмите на кнопку')
     else:
         await message.answer('Нажмите на кнопку')
+
+
+
+# Спасибо за отзыв, вы можете оставить жалобу в нашем канале \n\n'
+#                                  'https://t.me/sports2day/

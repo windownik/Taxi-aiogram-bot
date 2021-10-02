@@ -179,3 +179,9 @@ sber_kassa = InlineKeyboardButton(text=f'Сбер-касса', callback_data='sb
 payments_type_kb = InlineKeyboardMarkup().add(y_kassa)
 payments_type_kb.add(sber_kassa)
 payments_type_kb.add(back)
+
+
+yes_btn = InlineKeyboardButton(text=f'Да', callback_data='yes_btn')
+no_btn = InlineKeyboardButton(text=f'Нет', callback_data='no_btn')
+yes_no_kb = InlineKeyboardMarkup().add(yes_btn)
+yes_no_kb.add(no_btn)

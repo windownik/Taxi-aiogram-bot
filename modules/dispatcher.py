@@ -45,6 +45,8 @@ class client_Form(StatesGroup):
     delete_deal = State()
 
     mark_for_driver = State()
+    bed_description_driver = State()
+    bed_description_msg = State()
 
     show_all_trips = State()
 
