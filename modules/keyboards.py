@@ -36,8 +36,8 @@ def taxi_driver_start_kb():
     return taxi_driver_start_kb
 
 
-driver_msg_to_admin = InlineKeyboardMarkup()
-driver_msg_to_admin.add(back)
+back_driver = InlineKeyboardButton(text=f'Назад', callback_data='back_driver')
+driver_back_kb = InlineKeyboardMarkup().add(back_driver)
 
 
 taxi_driver_10 = InlineKeyboardButton(text=f'Увелисить радиус до 10км', callback_data='10')

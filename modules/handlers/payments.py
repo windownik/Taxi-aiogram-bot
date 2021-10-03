@@ -35,8 +35,8 @@ async def input_money(message: types.Message):
         if (100 - int(driver_balance)) >= int(message.text):
             with open('document.pdf', 'rb') as file:
                 await bot.send_document(chat_id=message.from_user.id, document=file,
-                                        caption='Оплачивая подписку вы соглашаетесь с правилами и условиями изложенными в '
-                                                'данном документе')
+                                        caption='Оплачивая подписку вы соглашаетесь с правилами и условиями '
+                                                'изложенными в данном документе')
             await bot.send_invoice(chat_id=message.from_user.id, title='Оплата за пользование ботом', currency='RUB',
                                    description=f'Вы ложите {message.text} RUR на свой счет в бот', payload='bot_pay',
                                    provider_token=pay_token, start_parameter='bot_pay',

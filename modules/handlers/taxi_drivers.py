@@ -13,6 +13,7 @@ from modules.keyboards import taxi_driver_kb, geo_kb, phone_kb, taxi_driver_star
 
 
 # Client menu
+@dp.callback_query_handler(state='*', text='back_driver')
 @dp.callback_query_handler(state=driver_Form.msg_admin_confirm, text='back')
 @dp.callback_query_handler(state=driver_Form.driver_receive_geo, text='back')
 @dp.callback_query_handler(state=driver_Form.driver_pay, text='back')
@@ -208,7 +209,7 @@ async def loc_handler(message: types.Message):
 # receive the start trip point
 @dp.message_handler(state=driver_Form.driver_find_trip)
 async def loc_handler(message: types.Message):
-    await message.answer('Отправьте свое местоположение с помощью кнопки')
+    await message.answer('Отправьте свое местоположение с помощью кнопки', reply_markup=geo_kb)
 
 
 # receive the your geo
@@ -289,6 +290,7 @@ async def loc_handler(call: types.CallbackQuery):
     d_data = sqLite.read_values_in_db_by_phone(table='drivers', name='telegram_id', data=call.from_user.id)
 
     data = sqLite.read_values_in_db_by_phone(table='connections', name='id', data=int(d_data[8]))
+    client = sqLite.read_values_in_db_by_phone(table='client', name='telegram_id', data=data[1])
     admin = sqLite.read_all_value_bu_name(name='*', table='admin')[0]
     procent = int(int(data[8]) * int(admin[10]) / 100)
     if procent > int(admin[11]):
@@ -306,9 +308,9 @@ async def loc_handler(call: types.CallbackQuery):
         sqLite.insert_info(table='connections', name='status', data='work',
                            telegram_id=int(d_data[8]), id_name='id')
 
-        # lust_deal = datetime.datetime.now()
-        # lust_deal = lust_deal + timedelta(hours=1)
-        # sqLite.insert_info(table='drivers', name='status', data=lust_deal, telegram_id=call.from_user.id)
+        lust_deal = datetime.datetime.now()
+        lust_deal = lust_deal + timedelta(hours=1)
+        sqLite.insert_info(table='drivers', name='status', data=lust_deal, telegram_id=call.from_user.id)
         sqLite.insert_info(table='drivers', name='time_geo', data='0',
                            telegram_id=call.from_user.id)
         old_balance = int(d_data[9])
@@ -321,7 +323,7 @@ async def loc_handler(call: types.CallbackQuery):
                                     f'Его рейтинг - <b>{d_data[6]}</b>',
                                reply_markup=start_deal_kb, parse_mode='html', chat_id=data[1])
         xy = str(str(data[3]).split("GEO#")[0]).split(' ')
-        await call.message.answer('Клиент ждет вас! Вы можете построить маршрут просто нажав на карту с низу')
+        await call.message.answer(f'Клиент ждет вас его телефон {str(client[3])}! Вы можете построить маршрут просто нажав на карту с низу')
         await bot.send_location(chat_id=call.from_user.id, latitude=xy[0], longitude=xy[1])
         await call.message.answer(f'В конце поездки напомните клиенту подтвердить выполнение заказа, если клиент не '
                                   f'подтвердит заказ. Система автоматически закроет заказ в вашу пользу через 1 час '
@@ -356,8 +358,9 @@ async def loc_handler(call: types.CallbackQuery):
     sqLite.insert_info(table='connections', name='status', data='active',
                        telegram_id=int(d_data[8]), id_name='id')
     data = sqLite.read_values_in_db_by_phone(table='connections', name='id', data=d_data[8])
-    await bot.send_message(chat_id=data[1], text='Водитель отказался от заказа, мы применем к нему меры!')
-    await call.message.edit_text('Вы отказались от заказа, ')
+    await bot.send_message(chat_id=data[1], text='Водитель отказался от заказа, мы применем к нему меры!',
+                           reply_markup=back_kb)
+    await call.message.edit_text('Вы отказались от заказа.')
 
     block_period_day = datetime.datetime.now() - timedelta(days=1)
     try:
@@ -365,9 +368,7 @@ async def loc_handler(call: types.CallbackQuery):
         block_lust = datetime.datetime.strptime(str(lust_bed_data), "%Y-%m-%d %H:%M:%S")
     except:
         block_lust = datetime.datetime.strptime('2021-01-20 00:34:51', "%Y-%m-%d %H:%M:%S")
-    print(block_period_day, block_lust)
     if block_period_day < block_lust:
-        print(1)
         block_data = datetime.datetime.now() + timedelta(days=1)
         sqLite.insert_info(table='drivers', telegram_id=call.from_user.id, name='status', data=str(block_data))
         sqLite.insert_info(table='drivers', telegram_id=call.from_user.id, name='lust_block_day',
@@ -381,7 +382,6 @@ async def loc_handler(call: types.CallbackQuery):
         sqLite.insert_info(table='drivers', telegram_id=call.from_user.id, name='block_number_month',
                            data=block_number)
     else:
-        print(2)
         sqLite.insert_info(table='drivers', telegram_id=call.from_user.id, name='lust_block_day',
                            data=datetime.datetime.now())
 

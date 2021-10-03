@@ -101,10 +101,12 @@ def delete_str(
 # Созданм новую запись о тратах или доходах в бд в личной таблице
 def insert_send_data(telegram_id: str,
                      text: str,
-                     send_data: str):
+                     send_data: str,
+                     *,
+                     deal_id: int = 0):
     connect = sqlite3.connect('modules/database.db')
     curs = connect.cursor()
-    curs.execute(f"INSERT INTO sender VALUES (?,?,?,?)",
-                 (None, f'{telegram_id}', f'{text}', f'{send_data}'))
+    curs.execute(f"INSERT INTO sender VALUES (?,?,?,?,?)",
+                 (None, f'{telegram_id}', f'{text}', f'{send_data}', deal_id))
     connect.commit()
     connect.close()
