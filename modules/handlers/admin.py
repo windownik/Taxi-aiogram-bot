@@ -1,7 +1,7 @@
 
 from datetime import timedelta
 from aiogram import types
-from bot import dp
+from main import dp
 import datetime
 from modules import sqLite
 from modules.keyboards import confirm_kb, back_kb, admin_kb, admin_client_kb, admin_driver_kb, admin_ban_kb, \

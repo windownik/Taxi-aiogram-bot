@@ -4,7 +4,7 @@ from aiogram import types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from datetime import timedelta
 
-from bot import dp
+from main import dp
 from modules import sqLite
 from modules.dispatcher import bot, start_Form, driver_Form, client_Form, admin_Form
 from modules.geo import adres_to_cords

@@ -55,5 +55,3 @@ def sender():
                 sqLite.delete_str(table='sender', name='id', data=d[0])
                 time.sleep(0.1)
         time.sleep(5)
-# 'https://api.telegram.org/bot1936600372:AAEWfVMbiLZFrdLvh-E98hV9JyoY6oWcR24/sendMessage?chat_id=580357185&text="текст"&reply_markup={"inline_keyboard":[[{"text":"Получать заявки на лету","callback_data":"update_live"}]]}'
-

@@ -109,4 +109,3 @@ class admin_Form(StatesGroup):
     admin_set_small = State()
 
     admin_set_big = State()
-

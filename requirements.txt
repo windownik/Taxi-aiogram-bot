@@ -1,3 +1,2 @@
-# python 3.8
 aiogram~=2.14.3
 requests~=2.26.0
