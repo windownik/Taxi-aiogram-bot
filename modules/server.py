@@ -1,6 +1,5 @@
 from modules import sqLite
 import datetime, calendar, time
-from modules.dispatcher import bot
 import requests
 
 

@@ -1,6 +1,6 @@
 from datetime import timedelta
 from aiogram import types
-from main import dp
+from bot import dp
 import datetime
 from modules.geo import adres_to_cords
 from modules import sqLite, geo

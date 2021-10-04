@@ -1,7 +1,7 @@
 from aiogram import types
 from aiogram.types.message import ContentTypes
 
-from main import dp
+from bot import dp
 from modules import sqLite, workWF
 from modules.dispatcher import bot, driver_Form
 from modules.keyboards import pay_one_month_kb, taxi_driver_start_kb

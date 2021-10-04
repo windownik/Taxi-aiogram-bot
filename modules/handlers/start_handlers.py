@@ -1,6 +1,6 @@
 from aiogram import types
 from aiogram.types import ContentType
-from main import dp
+from bot import dp
 from aiogram.dispatcher.filters import Text
 import logging
 from aiogram.dispatcher import FSMContext
