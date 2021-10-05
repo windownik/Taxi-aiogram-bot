@@ -27,14 +27,18 @@ def sender():
         for d in data:
             line_time = datetime.datetime.strptime(str(d[3]).split('.')[0], "%Y-%m-%d %H:%M:%S")
             if line_time < time_now:
-                req_text = API_link + 'sendMessage?chat_id=' + str(d[1]) + '&text=' + str(d[2]) + '&reply_markup={"inline_keyboard":[[{"text":"Получать заявки на лету","callback_data":"update_live"}]]}'
+                req_text = API_link + 'sendMessage?chat_id=' + str(d[1]) + '&text=' + str(d[2]) + '&reply_markup={"inline_keyboard":[[{"text":"Получать заявки на лету","callback_data":"update_live"}, {"text":"Отключить режим ожидания","callback_data":"update_live_off"}]]}'
                 req_text_5min = API_link + 'sendMessage?chat_id=' + str(d[1]) + '&text=' + str(d[2]) + '&reply_markup={"inline_keyboard":[[{"text":"Изменить поездку","callback_data":"change_trip"}]]}'
+                status = sqLite.read_values_in_db_by_phone(table='drivers', name='telegram_id', data=d[1])[14]
                 if '15 минут истекло' in str(d[2]):
-                    try:
-                        requests.post(req_text)
-                    except:
-                        time.sleep(1)
-                        requests.post(req_text)
+                    if str(status) == '0':
+                        pass
+                    else:
+                        try:
+                            requests.post(req_text)
+                        except:
+                            time.sleep(1)
+                            requests.post(req_text)
                 elif 'Прошло 5 минут' in str(d[2]):
                     try:
                         status = sqLite.read_values_in_db_by_phone(table='connections', name='id', data=d[4])[6]
@@ -44,6 +48,19 @@ def sender():
                             except:
                                 time.sleep(1)
                                 requests.post(req_text_5min)
+                    except:
+                        pass
+                elif 'Удалить заказ спустя 30 минут' in str(d[2]):
+                    try:
+                        status = sqLite.read_values_in_db_by_phone(table='connections', name='id', data=d[4])[6]
+                        if 'active' in str(status):
+                            try:
+                                sqLite.insert_info(table='connections', name='status', data='delete',
+                                                   telegram_id=int(d[4]), id_name='id')
+                            except:
+                                time.sleep(1)
+                                sqLite.insert_info(table='connections', name='status', data='delete',
+                                                   telegram_id=int(d[4]), id_name='id')
                     except:
                         pass
                 else:

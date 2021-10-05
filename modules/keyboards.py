@@ -101,10 +101,12 @@ my_deal_kb.add(change_distant)
 my_deal_kb.add(delete_deal)
 my_deal_kb.add(back)
 
-
+update_live_off = InlineKeyboardButton(text=f'Отключить режим ожидания', callback_data='update_live_off')
 update_live = InlineKeyboardButton(text=f'Получать заявки на лету', callback_data='update_live')
 update_live_kb = InlineKeyboardMarkup().add(update_live)
 update_live_kb.add(back)
+
+update_live_off_kb = InlineKeyboardMarkup().add(update_live_off)
 
 
 driver_finish_trip = InlineKeyboardButton(text=f'Поставить оценку', callback_data='driver_finish_trip')
@@ -183,3 +185,5 @@ yes_btn = InlineKeyboardButton(text=f'Да', callback_data='yes_btn')
 no_btn = InlineKeyboardButton(text=f'Нет', callback_data='no_btn')
 yes_no_kb = InlineKeyboardMarkup().add(yes_btn)
 yes_no_kb.add(no_btn)
+
+

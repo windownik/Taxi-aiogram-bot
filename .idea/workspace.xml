@@ -2,33 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="9d45c1e5-9087-4333-b513-7cc41f49719f" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/Procfile" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Taxi bot _2_.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Taxi bot _3.docx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/document.pdf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/database.db" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/dispatcher.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/geo.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/handlers/admin.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/handlers/client.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/handlers/payments.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/handlers/payments_sber.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/handlers/start_handlers.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/handlers/taxi_drivers.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/keyboards.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/price.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/sber_token.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/server.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/sqLite.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/telegram_token.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/workWF.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/yo_token.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runtime.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Информация.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modules/database.db" beforeDir="false" afterPath="$PROJECT_DIR$/modules/database.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modules/handlers/client.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/handlers/client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modules/handlers/payments.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/handlers/payments.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modules/handlers/taxi_drivers.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/handlers/taxi_drivers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modules/keyboards.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/keyboards.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modules/server.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/server.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -82,16 +62,5 @@
       <updated>1633336076915</updated>
     </task>
     <servers />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/main.py</url>
-          <line>8</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>

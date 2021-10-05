@@ -7,9 +7,8 @@ from datetime import timedelta
 from main import dp
 from modules import sqLite
 from modules.dispatcher import bot, start_Form, driver_Form, client_Form, admin_Form
-from modules.geo import adres_to_cords
-from modules.keyboards import taxi_driver_kb, geo_kb, phone_kb, taxi_driver_start_kb, confirm_kb, \
-    start_driver_deal_kb, update_live_kb, back_kb
+from modules.keyboards import geo_kb, phone_kb, taxi_driver_start_kb, confirm_kb, \
+    start_driver_deal_kb, update_live_kb, back_kb, update_live_off_kb
 
 
 # Client menu
@@ -37,7 +36,8 @@ async def start_menu(call: types.CallbackQuery):
                                        'последствии может быть заблокирован!')
         await driver_Form.driver_reg_name.set()
     else:
-        await call.message.answer(text=f'Добрый день <b>{client[2]}</b>. Твой рейтинг <b>{client[6]}</b>. \n'
+        rating = round(float(client[6]), 1)
+        await call.message.answer(text=f'Добрый день <b>{client[2]}</b>. Твой рейтинг <b>{rating}</b>. \n'
                                        f'Чем могу помочь?',
                                   reply_markup=taxi_driver_start_kb(), parse_mode='html')
         await driver_Form.driver_first_menu.set()
@@ -101,7 +101,8 @@ async def loc_handler(message: types.Message):
                          'Ваш счет пополнен на 100 RUR')
     sqLite.insert_info(table='drivers', name='car', data=message.text,
                        telegram_id=message.from_user.id)
-    await message.answer(text=f'Добрый день <b>{client[2]}</b>. Твой рейтинг <b>{client[6]}</b>. \n'
+    rating = round(float(client[6]), 1)
+    await message.answer(text=f'Добрый день <b>{client[2]}</b>. Твой рейтинг <b>{rating}</b>. \n'
                               f'Чем могу помочь?',
                          reply_markup=taxi_driver_start_kb(), parse_mode='html')
     await driver_Form.driver_first_menu.set()
@@ -163,10 +164,6 @@ async def loc_handler(message: types.Message):
     geo = sqLite.read_value_bu_name(name='geo', table='drivers', telegram_id=message.from_user.id)[0]
     x = str(geo).split(' ')[0]
     y = str(geo).split(' ')[1]
-    x_left = float(x) + 0.0088 * 500
-    x_right = float(x) - 0.0088 * 500
-    y_up = float(y) + 0.015187 * 500
-    y_down = float(y) - 0.015187 * 500
 
     trip = sqLite.read_all_value_bu_name(table='connections', name='*')
     sqLite.insert_info(table='drivers', name='range_geo', data='5', telegram_id=message.from_user.id)
@@ -221,10 +218,6 @@ async def loc_handler(call: types.CallbackQuery):
     geo = sqLite.read_value_bu_name(name='geo', table='drivers', telegram_id=call.from_user.id)[0]
     x = str(geo).split(' ')[0]
     y = str(geo).split(' ')[1]
-    x_left = float(x) + 0.0088 * 500
-    x_right = float(x) - 0.0088 * 500
-    y_up = float(y) + 0.015187 * 500
-    y_down = float(y) - 0.015187 * 500
 
     trip = sqLite.read_all_value_bu_name(table='connections', name='*')
     sqLite.insert_info(table='drivers', name='range_geo', data='1', telegram_id=call.from_user.id)
@@ -267,19 +260,13 @@ async def loc_handler(call: types.CallbackQuery):
 # Confirm deal
 @dp.callback_query_handler(state=driver_Form.deal_list, text='update_live')
 async def loc_handler(call: types.CallbackQuery):
-    client = sqLite.read_all_values_in_db(table='drivers', telegram_id=call.from_user.id)
-    await call.message.answer('Вы будете получать заявки на лету в течении 15 мин')
+    await call.message.answer('Вы будете получать заявки на лету в течении 15 мин', reply_markup=update_live_off_kb)
     time_15 = datetime.datetime.now() + timedelta(minutes=15)
     sqLite.insert_info(table='drivers', name='time_geo', data=str(time_15).split('.')[0],
                        telegram_id=call.from_user.id)
     sqLite.insert_send_data(telegram_id=call.from_user.id,
                             text='15 минут истекло. Нажмите кнопку ниже если хотите продлить режим ожидания.',
                             send_data=str(time_15).split('.')[0])
-    await driver_Form.driver_first_menu.set()
-
-    await call.message.answer(text=f'Добрый день <b>{client[2]}</b>. Твой рейтинг <b>{client[6]}</b>. \n'
-                                   f'Чем могу помочь?',
-                              reply_markup=taxi_driver_start_kb(), parse_mode='html')
     await driver_Form.driver_first_menu.set()
 
 
@@ -296,7 +283,7 @@ async def loc_handler(call: types.CallbackQuery):
     if procent > int(admin[11]):
         procent = int(admin[11])
 
-    if data[6] == 'active' and int(d_data[9]) >= procent:
+    if (data[6] == 'active' and int(d_data[9]) >= procent) or call.data == 'back':
         sqLite.insert_info(table='connections', name='driver', data=call.from_user.id,
                            telegram_id=int(d_data[8]), id_name='id')
         sqLite.insert_info(table='connections', name='status', data='work',
@@ -317,13 +304,15 @@ async def loc_handler(call: types.CallbackQuery):
         new_balance = old_balance - procent
         sqLite.insert_info(table='drivers', name='pay_line', data=new_balance, telegram_id=call.from_user.id)
         sqLite.insert_info(table='drivers', name='data', data=str(procent), telegram_id=call.from_user.id)
+        rating = round(float(d_data[6]), 1)
         await bot.send_message(text=f'К вам едет водитель <b>{d_data[2]}</b>\n'
                                     f'<b>{d_data[4]}</b>\nГосномер авто: <b>{d_data[5]}</b>\n'
                                     f'Телефонный номер водителя <b>{d_data[3]}</b>\n'
-                                    f'Его рейтинг - <b>{d_data[6]}</b>',
+                                    f'Его рейтинг - <b>{rating}</b>',
                                reply_markup=start_deal_kb, parse_mode='html', chat_id=data[1])
         xy = str(str(data[3]).split("GEO#")[0]).split(' ')
-        await call.message.answer(f'Клиент ждет вас его телефон {str(client[3])}! Вы можете построить маршрут просто нажав на карту с низу')
+        await call.message.answer(f'Клиент ждет вас его телефон {str(client[3])}! Вы можете построить маршрут просто '
+                                  f'нажав на карту с низу')
         await bot.send_location(chat_id=call.from_user.id, latitude=xy[0], longitude=xy[1])
         await call.message.answer(f'В конце поездки напомните клиенту подтвердить выполнение заказа, если клиент не '
                                   f'подтвердит заказ. Система автоматически закроет заказ в вашу пользу через 1 час '
@@ -333,7 +322,8 @@ async def loc_handler(call: types.CallbackQuery):
     else:
         client = sqLite.read_all_values_in_db(table='drivers', telegram_id=call.from_user.id)
         await call.message.answer('Заказ уже забрали, либо у вас не достаточно средств для оплаты комисии')
-        await call.message.answer(text=f'Добрый день <b>{client[2]}</b>. Твой рейтинг <b>{client[6]}</b>. \n'
+        rating = round(float(client[6]), 1)
+        await call.message.answer(text=f'Добрый день <b>{client[2]}</b>. Твой рейтинг <b>{rating}</b>. \n'
                                        f'Чем могу помочь?',
                                   reply_markup=taxi_driver_start_kb(), parse_mode='html')
         await driver_Form.driver_first_menu.set()
@@ -394,7 +384,8 @@ async def loc_handler(call: types.CallbackQuery):
     sqLite.insert_info(table='drivers', name='rating_number', data=(rating_number + 1),
                        telegram_id=call.from_user.id)
     client = sqLite.read_all_values_in_db(table='drivers', telegram_id=call.from_user.id)
-    await call.message.answer(text=f'Добрый день <b>{client[2]}</b>. Твой рейтинг <b>{client[6]}</b>. \n'
+    rating = round(float(client[6]), 1)
+    await call.message.answer(text=f'Добрый день <b>{client[2]}</b>. Твой рейтинг <b>{rating}</b>. \n'
                                    f'Чем могу помочь?',
                               reply_markup=taxi_driver_start_kb(), parse_mode='html')
     await driver_Form.driver_first_menu.set()
@@ -408,7 +399,8 @@ async def loc_handler(call: types.CallbackQuery):
     sqLite.insert_info(table='connections', name='status', data='close',
                        telegram_id=int(d_data[8]), id_name='id')
     await call.message.answer('Поздравляем заказ выполнен')
-    await call.message.answer(text=f'Добрый день <b>{driver[2]}</b>. Твой рейтинг <b>{driver[6]}</b>. \n'
+    rating = round(float(driver[6]), 1)
+    await call.message.answer(text=f'Добрый день <b>{driver[2]}</b>. Твой рейтинг <b>{rating[6]}</b>. \n'
                                    f'Чем могу помочь?',
                               reply_markup=taxi_driver_start_kb(), parse_mode='html')
     await driver_Form.driver_first_menu.set()
@@ -441,7 +433,8 @@ async def add_person_start(call: types.CallbackQuery):
                                                   f'<b>{driver[3]}</b> \n\n{text}',
                            parse_mode='html')
     await call.message.answer('Ваше сообщение отправлено')
-    await call.message.answer(text=f'Добрый день <b>{client[2]}</b>. Твой рейтинг <b>{client[6]}</b>. \n'
+    rating = round(float(client[6]), 1)
+    await call.message.answer(text=f'Добрый день <b>{client[2]}</b>. Твой рейтинг <b>{rating}</b>. \n'
                                    f'Чем могу помочь?',
                               reply_markup=taxi_driver_start_kb(), parse_mode='html')
     await driver_Form.driver_first_menu.set()
@@ -465,7 +458,8 @@ async def loc_handler(message: types.Message):
             sqLite.insert_info(table='client', name='rating_number', data=(int(rating_number) + 1),
                                telegram_id=data[1])
             await message.answer('Спасибо за отзыв')
-            await message.answer(text=f'Добрый день <b>{client[2]}</b>. Твой рейтинг <b>{client[6]}</b>. \n'
+            rating = round(float(client[6]), 1)
+            await message.answer(text=f'Добрый день <b>{client[2]}</b>. Твой рейтинг <b>{rating}</b>. \n'
                                       f'Чем могу помочь?',
                                  reply_markup=taxi_driver_start_kb(), parse_mode='html')
             await driver_Form.driver_first_menu.set()

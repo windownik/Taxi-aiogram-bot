@@ -4,7 +4,7 @@ from aiogram.types.message import ContentTypes
 from main import dp
 from modules import sqLite, workWF
 from modules.dispatcher import bot, driver_Form
-from modules.keyboards import pay_one_month_kb, taxi_driver_start_kb
+from modules.keyboards import taxi_driver_start_kb
 
 
 # Pay for using
@@ -32,20 +32,32 @@ async def input_money(message: types.Message):
             pay_token = workWF.read_sber_token()
         price = f'{message.text}00'
         driver_balance = sqLite.read_all_values_in_db(table='drivers', telegram_id=message.from_user.id)[9]
-        if (100 - int(driver_balance)) >= int(message.text):
+        max_pay = 100 - int(driver_balance)
+        if max_pay >= int(message.text):
             with open('document.pdf', 'rb') as file:
                 await bot.send_document(chat_id=message.from_user.id, document=file,
                                         caption='Оплачивая подписку вы соглашаетесь с правилами и условиями '
                                                 'изложенными в данном документе')
-            await bot.send_invoice(chat_id=message.from_user.id, title='Оплата за пользование ботом', currency='RUB',
-                                   description=f'Вы ложите {message.text} RUR на свой счет в бот', payload='bot_pay',
-                                   provider_token=pay_token, start_parameter='bot_pay',
-                                   prices=[{"label": 'Руб', "amount": int(price)}])
+            try:
+                await bot.send_invoice(chat_id=message.from_user.id, title='Оплата за пользование ботом',
+                                       currency='RUB',
+                                       description=f'Вы ложите {message.text} RUR на свой счет в бот',
+                                       payload='bot_pay',
+                                       provider_token=pay_token, start_parameter='bot_pay',
+                                       prices=[{"label": 'Руб', "amount": int(price)}])
+            except:
+                client = sqLite.read_all_values_in_db(table='drivers', telegram_id=message.from_user.id)
+                await message.answer('Ошибка платежной системы')
+                await message.answer(text=f'Добрый день <b>{client[2]}</b>. Твой рейтинг <b>{client[6]}</b>. \n'
+                                          f'Чем могу помочь?',
+                                     reply_markup=taxi_driver_start_kb(), parse_mode='html')
+                await driver_Form.driver_first_menu.set()
             file.close()
             sqLite.insert_info(table='drivers', name='data', data=message.text,
                                telegram_id=message.from_user.id)
         else:
-            await message.answer('Баланс не может превышать 100 RUR. Сумма пополнения должна быть меньше')
+            await message.answer(f'Баланс не может превышать 100 RUR. Сумма пополнения должна быть <b>{max_pay} RUR</b>'
+                                 f' или меньше', parse_mode='html')
     else:
         await message.answer('Введите только цифры.')
 
